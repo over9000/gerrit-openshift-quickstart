@@ -11,39 +11,21 @@ config_dir="${site_dir}etc/"
 # prepopulate site dir with ssh keys
 if [ ! -d "${site_dir}" ]
 then
-	java -jar ${OPENSHIFT_DATA_DIR}gerrit.war init --batch --no-auto-start -d ${site_dir}
-	# remove the git dir, the UUID of the All-projects.git must match the Administrators
-	# group content in the database
-	rm -rf ${site_dir}git
-fi
+	java -jar ${OPENSHIFT_DATA_DIR}gerrit.war init --batch --no-auto-start --install-plugin download-commands --install-plugin commit-message-length-validator -d ${site_dir}
 
-# overwrite config with mysql config
-# creating config first and then running init does not work, because the ssh key is not
-# generated if config_dir is present.
-
-if [ -z "$OPENSHIFT_MYSQL_DB_HOST" ]
-then
-    echo 1>&2
-    echo "Could not find mysql database.  Please run:" 1>&2
-    echo "rhc cartridge add -a $OPENSHIFT_APP_NAME -c mysql-5.5" 1>&2
-    echo "then make a sample commit (add whitespace somewhere) and re-push" 1>&2
-    echo 1>&2
-    exit 5
-fi
-
-cat >${config_dir}gerrit.config <<EOF
+	cat >${config_dir}gerrit.config <<EOF
 [gerrit]
 	basePath = git
 	canonicalWebUrl = https://${OPENSHIFT_APP_DNS}/
 [database]
-	type = mysql
-	database = ${OPENSHIFT_APP_NAME}
-	hostname = ${OPENSHIFT_MYSQL_DB_HOST}
-	port = ${OPENSHIFT_MYSQL_DB_PORT}
-	username = ${OPENSHIFT_MYSQL_DB_USERNAME}
-	password = ${OPENSHIFT_MYSQL_DB_PASSWORD}
+	type = h2
+	database = ${OPENSHIFT_DATA_DIR}site/db/ReviewDB
+[index]
+	type = LUCENE
 [auth]
 	type = OPENID
+[receive]
+	enableSignedPush = false
 [sendemail]
 	smtpServer = localhost
 [container]
@@ -58,6 +40,10 @@ cat >${config_dir}gerrit.config <<EOF
 	directory = cache
 EOF
 
-# rerun init to initialize mysql database
-java -jar ${OPENSHIFT_DATA_DIR}gerrit.war init --batch --no-auto-start --install-plugin download-commands -d ${site_dir}
-java -jar ${OPENSHIFT_DATA_DIR}gerrit.war reindex -d ${site_dir}
+fi
+
+#Delete gerrit.war
+if [ -f "${install_file}" ]
+then
+	rm ${OPENSHIFT_DATA_DIR}gerrit.war
+fi

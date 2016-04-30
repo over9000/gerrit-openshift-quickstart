@@ -8,9 +8,9 @@ On your client machine, install rhc and setup with the newly created account on 
     gem install rhc
     rhc setup --server openshift.redhat.com --rhlogin LOGIN --password PASSWORD
     
-The below command creates a DIY 0.1 application + a MySQL 5.5 cartridge to the app, and import the quickstart code:
+The below command creates a DIY 0.1 application, and import the quickstart code:
 
-    rhc app create <app name> diy mysql-5.5 --from-code=https://github.com/csett86/gerrit-openshift-quickstart.git
+    rhc app create <app name> diy --from-code=https://github.com/over9000/gerrit-openshift-quickstart.git
 
 You can now checkout Gerrit application at:
 

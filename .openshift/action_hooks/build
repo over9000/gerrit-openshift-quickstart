@@ -6,11 +6,9 @@ install_version="2.12.2"
 
 # Download and install Gerrit
 
-install_file=${OPENSHIFT_DATA_DIR}gerrit-${install_version}.war
+install_file=${OPENSHIFT_DATA_DIR}gerrit.war
 
-# The current version of Gerrit is already installed, nothing else to do...
+# Gerrit is already installed, nothing else to do...
 [ -f "${install_file}" ] && exit 0
 
 curl -s https://gerrit-releases.storage.googleapis.com/gerrit-${install_version}.war > ${install_file}
-
-ln -sf ${install_file} ${OPENSHIFT_DATA_DIR}gerrit.war
