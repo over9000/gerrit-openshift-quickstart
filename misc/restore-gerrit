@@ -1,0 +1,42 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+	echo "Missing SSH address: backup-gerrit <ID>@<appname>-<namespace>.rhcloud.com <gerrit-backup.tar.gz>"
+	exit 1
+fi
+
+if [ -z "$2" ]; then
+	echo "Missing backup file: backup-gerrit <ID>@<appname>-<namespace>.rhcloud.com <gerrit-backup.tar.gz>"
+	exit 1
+fi
+
+read -p"Restoring Gerrit will override the current site. Are you sure? (y/n)? " response
+
+if [ "$response" != "y" ]; then
+	echo "Abort restoring Gerrit"
+	exit 1
+fi
+
+sshAddress=$1
+fullFilePath="$2"
+filename=$(basename "$fullFilePath")
+
+dataDir="app-root/data"
+site="$dataDir/site"
+
+#upload 
+scp $fullFilePath $sshAddress:$dataDir/$filename
+#stop gerrit
+echo "Stop Gerrit"
+ssh $sshAddress "./$site/bin/gerrit.sh stop"
+#extract backup
+echo "Override site with backup"
+ssh $sshAddress "rm -r $site"
+ssh $sshAddress "tar -xzf '$dataDir/$filename' -C ."
+#restart gerrit
+echo "Start Gerrit"
+ssh $sshAddress "./$site/bin/gerrit.sh start"
+# delete backup on server
+echo "Delete backup on server"
+ssh $sshAddress "rm $dataDir/$filename"
+

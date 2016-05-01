@@ -1,0 +1,27 @@
+#!/bin/sh
+if [ -z "$1" ]; then
+	echo "Missing SSH address: backup-gerrit <ID>@<appname>-<namespace>.rhcloud.com"
+	exit 1
+fi
+
+prefix=$(date +%Y-%m-%d.%k-%M-%S)
+sshAddress=$1
+dataDir="app-root/data"
+site="$dataDir/site"
+backupName="Gerrit-Backup-$prefix.tar.gz"
+
+#stop gerrit
+echo "Stop Gerrit"
+ssh $sshAddress "./$site/bin/gerrit.sh stop"
+#create backup
+echo "Create Gerrit backup tar.gz"
+ssh $sshAddress "tar -czf '$dataDir/$backupName' '$site'"
+#restart gerrit
+echo "Start Gerrit"
+ssh $sshAddress "./$site/bin/gerrit.sh start"
+#download backup
+echo "Download backup"
+scp $sshAddress:"./$dataDir/$backupName" "$backupName"
+# delete backup on server
+echo "Delete backup on server"
+ssh $sshAddress "rm $dataDir/$backupName"
